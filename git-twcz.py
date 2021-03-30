@@ -1,3 +1,4 @@
+import curses
 import os
 import platform
 import time
@@ -22,7 +23,6 @@ class WindowsSystemHandle(object):
 
 class UnixSystemHandle(object):
     def __init__(self):
-        import curses
         self.stdscr = curses.initscr()
         self.stdscr.keypad(True)
         curses.noecho()
@@ -35,7 +35,6 @@ class UnixSystemHandle(object):
         return self.stdscr.getkey()
 
     def __del__(self):
-        import curses
         curses.endwin()
 
 
@@ -55,26 +54,27 @@ def setting_author_name(name):
 
 ENTER = b'\n'
 SPACE = b' '
-BACK_SPACE = b'\x08'
+BACK_SPACE = b'\x7f'
 
 
 class Params(object):
     phrase = ''
     correct_message = ''
     translate_message_text = ''
+    stop = False
 
 
 def show_content():
     system_handle.clear()
-    print('Input:\t', params.phrase)
-    print('-' * 100)
-    print(params.correct_message)
-    print(params.translate_message_text)
+    print('\rInput:\t', params.phrase)
+    print('\r', '-' * 100)
+    print('\r', params.correct_message)
+    print('\r', params.translate_message_text)
 
 
 def translation_run():
     intermediate_phrase = ''
-    while True:
+    while not params.stop:
         space_index = params.phrase.rfind(' ')  # 去除掉末尾单词
         phrase = params.phrase[:space_index]
         if phrase != intermediate_phrase:
@@ -104,6 +104,7 @@ if __name__ == '__main__':
         if byte_chr == ENTER:
             # 如果是换行,则退出循环
             chr = ''
+            params.stop = True
             break
         elif byte_chr == BACK_SPACE:
             # 退格删除
