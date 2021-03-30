@@ -1,5 +1,7 @@
 import os
 import platform
+import time
+from threading import Thread
 
 from google_translator import google_translator
 
@@ -55,7 +57,36 @@ ENTER = b'\n'
 SPACE = b' '
 BACK_SPACE = b'\x08'
 
+
+class Params(object):
+    phrase = ''
+    correct_message = ''
+    translate_message_text = ''
+
+
+def show_content():
+    system_handle.clear()
+    print('Input:\t', params.phrase)
+    print('-' * 100)
+    print(params.correct_message)
+    print(params.translate_message_text)
+
+
+def translation_run():
+    intermediate_phrase = ''
+    while True:
+        space_index = params.phrase.rfind(' ')  # 去除掉末尾单词
+        phrase = params.phrase[:space_index]
+        if phrase != intermediate_phrase:
+            # 本次输入与上次不一样 须要识别
+            params.correct_message, translate_message = google_translator(params.phrase)
+            params.translate_message_text = translate_message.text
+            show_content()
+        time.sleep(1)
+
+
 if __name__ == '__main__':
+    params = Params()
     author_name = read_author_name_from_config()
     card_name = 'N/A'
     # 在这里加上实时控制代码，输入一个英文字符串或者中文字符串时，当我使用空格键时，将输入的字符串传入google_translator方法中，并在下方实时显示correct_message和translate_message
@@ -64,25 +95,20 @@ if __name__ == '__main__':
     else:
         system_handle = UnixSystemHandle()
 
-    phrase = correct_message = translate_message_text = ''
     system_handle.clear()
+    Thread(target=translation_run).start()
     print('Input:\t')
     while True:
         chr = system_handle.getkey()
         byte_chr = chr.encode()
         if byte_chr == ENTER:
             # 如果是换行,则退出循环
-            continue
+            chr = ''
+            break
         elif byte_chr == BACK_SPACE:
             # 退格删除
-            phrase = phrase[:-1]
+            params.phrase = params.phrase[:-1]
         else:
-            phrase += chr
-        system_handle.clear()
-        print('Input:\t', phrase)
-        if byte_chr == SPACE:
-            correct_message, translate_message = google_translator(phrase)
-            translate_message_text = translate_message.text
-        print('-' * 20)
-        print(correct_message)
-        print(translate_message_text)
+            params.phrase += chr
+
+        show_content()
