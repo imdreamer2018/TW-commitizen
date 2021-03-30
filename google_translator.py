@@ -1,7 +1,9 @@
 from googletrans import Translator
 from spelling_checker import checker
 
-translator = Translator()
+translator = Translator(service_urls=[
+      'translate.google.cn'
+    ])
 
 
 def language_detect(msg):
